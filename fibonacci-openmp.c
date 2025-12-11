@@ -2,10 +2,12 @@
 #include <omp.h>
 #include <time.h>
 
-#define N 20
+#define N 40
 
 int fib_parallel(int n) {
     if (n < 2) return n;
+
+    if (n <= 35) return fib_sequential(n);
 
     int x, y;
 
