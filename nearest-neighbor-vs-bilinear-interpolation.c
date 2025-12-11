@@ -114,45 +114,6 @@ unsigned char* bilinear_resize(
     return dst;
 }
 
-/*
-Downsize image untuk mendapatkan ground truth reference
-*/
-unsigned char* downsize_image(unsigned char* src, int src_w, int src_h, int channels, int new_w, int new_h) {
-    unsigned char* dst = malloc(new_w * new_h * channels);
-    double x_ratio = (double)(src_w - 1) / (new_w - 1);
-    double y_ratio = (double)(src_h - 1) / (new_h - 1);
-
-    for (int i = 0; i < new_h; i++) {
-        for (int j = 0; j < new_w; j++) {
-            double src_x = j * x_ratio;
-            double src_y = i * y_ratio;
-
-            int x1 = (int)src_x;
-            int y1 = (int)src_y;
-            int x2 = (x1 == src_w - 1) ? x1 : x1 + 1;
-            int y2 = (y1 == src_h - 1) ? y1 : y1 + 1;
-
-            double dx = src_x - x1;
-            double dy = src_y - y1;
-
-            for (int c = 0; c < channels; c++) {
-                double Q11 = src[(y1 * src_w + x1) * channels + c];
-                double Q21 = src[(y1 * src_w + x2) * channels + c];
-                double Q12 = src[(y2 * src_w + x1) * channels + c];
-                double Q22 = src[(y2 * src_w + x2) * channels + c];
-
-                double val = bilinear_interpolate(dx, dy, Q11, Q21, Q12, Q22);
-                if (val < 0) val = 0;
-                if (val > 255) val = 255;
-
-                dst[(i * new_w + j) * channels + c] = (unsigned char)(val + 0.5);
-            }
-        }
-    }
-
-    return dst;
-}
-
 int main() {
     const char* input_path = "input2.png";
     const char* output_nearest = "output_nearest.png";
@@ -170,7 +131,7 @@ int main() {
     // Create ground truth by downsizing then upsizing
     int small_w = width / 2;
     int small_h = height / 2;
-    unsigned char* small = downsize_image(src, width, height, channels, small_w, small_h);
+    unsigned char* small = bilinear_resize(src, width, height, channels, small_w, small_h);
     
     int new_w = width; // upscale kembali ke ukuran original
     int new_h = height;
